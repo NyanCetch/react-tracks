@@ -8,7 +8,7 @@ import Root from "./Root";
 import Auth from "./components/Auth";
 
 const client = new ApolloClient({
-  uri: `http://${process.env.DOMAIN_NAME}/${process.env.API_NAME}/`,
+  uri: "http://api.localhost/graphql/",
   fetchOptions: {
     credentials: "include"
   },

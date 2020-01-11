@@ -4,7 +4,7 @@ services:
     image: traefik:v2.0
     container_name: react-tracks-reverse-proxy
     # Enables the web UI and tells Traefik to listen to docker
-    # command: --api.insecure=true --providers.docker --api.dashboard=true
+    command: --api.insecure=true --providers.docker --api.dashboard=true
     labels: 
       - "traefik.http.routers.reverse-proxy.rule=Host(`monitor.${DOMAIN_NAME}`)"
       - "traefik.http.services.reverse-proxy.loadbalancer.server.port=8080"
@@ -19,39 +19,38 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-      - reverse-proxy/traefik.toml:/traefik.toml
-    env_file: .env
       
-  # backend:
-  #   build: ./backend
-  #   container_name: react-tracks-backend
-  #   volumes:
-  #     - ./backend:/app/backend
-  #   ports: 
-  #     - "8000:8000"
-  #   labels:
-  #     - "traefik.http.routers.backend.rule=Host(`api`)"
-  #     - "traefik.http.services.backend.loadbalancer.server.port=8000"
-  #   environment: 
-  #     - ALLOWED_HOSTS=backend.docker.localhost
-  #     - CORS_ORIGIN_WHITELIST=http://frontend.docker.localhost
-  #   depends_on:
-  #     - reverse-proxy
-  #   stdin_open: true
-  #   tty: true
-  #   command: python3 manage.py runserver 0.0.0.0:8000
+  backend:
+    build: ./backend
+    container_name: react-tracks-backend
+    volumes:
+      - ./backend:/app/backend
+    ports: 
+      - "8000:8000"
+    labels:
+      - "traefik.http.routers.backend.rule=Host(`${API_NAME}.${DOMAIN_NAME}`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    environment: 
+      - ALLOWED_HOSTS=${API_NAME}.${DOMAIN_NAME}
+      - CORS_ORIGIN_WHITELIST=http://${DOMAIN_NAME}
+    depends_on:
+      - reverse-proxy
+    stdin_open: true
+    tty: true
+    command: python3 manage.py runserver 0.0.0.0:8000
 
-  # frontend:
-  #   build: ./frontend
-  #   container_name: react-tracks-frontend
-  #   labels:
-  #     - "traefik.http.routers.frontend.rule=Host(`frontend.docker.localhost`)"
-  #     - "traefik.http.services.frontend.loadbalancer.server.port=3000"
-  #   volumes:
-  #     - ./frontend:/app
-  #     # One-way volume to use node_modules from inside image
-  #     - /app/node_modules
-  #   depends_on:
-  #     - backend
-  #   env_file: .env
-  #   command: npm start
+  frontend:
+    build: ./frontend
+    container_name: react-tracks-frontend
+    labels:
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    volumes:
+      - ./frontend:/app
+      # One-way volume to use node_modules from inside image
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment: 
+      - DOMAIN_NAME:${DOMAIN_NAME}
+      - API_NAME:${API_NAME}

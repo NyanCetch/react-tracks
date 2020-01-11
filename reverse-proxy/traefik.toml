@@ -1,21 +1,23 @@
-defaultEntryPoints = ["http", "https"]
-
 [entryPoints]
   [entryPoints.dashboard]
     address = ":8080"
-    [entryPoints.dashboard.auth]
-      [entryPoints.dashboard.auth.basic]
-        users = ["admin:$apr1$aD6OR.kn$2VA0f0Ms4Ru8NbhjRiciy0"]
+
   [entryPoints.http]
     address = ":80"
+
 
   [entryPoints.https]
     address = ":443"
 
-[api]
-entrypoint="dashboard"
+[acme]
+email = "nyancetch@gmail.com"
+storage = "acme.json"
+entryPoint = "https"
+onHostRule = true
+  [acme.httpChallenge]
+  entryPoint = "http"
 
-[docker]
-domain = "test.reacttracks.codes"
+[providers.docker]
+domain = "localhost"
 watch = true
 network = "web"
